@@ -1,0 +1,14 @@
+{
+	"folders": [
+		{
+			"name": "SoilMoistureNode",
+			"path": "."
+		}
+	],
+	"settings": {
+		"files.associations": {
+			"*.h": "cpp",
+			"*.cpp": "cpp"
+		}
+	}
+}
