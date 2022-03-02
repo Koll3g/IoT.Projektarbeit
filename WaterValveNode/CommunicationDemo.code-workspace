@@ -1,0 +1,14 @@
+{
+	"folders": [
+		{
+			"name": "CommunicationDemo",
+			"path": "."
+		}
+	],
+	"settings": {
+		"files.associations": {
+			"*.h": "cpp",
+			"*.cpp": "cpp"
+		}
+	}
+}

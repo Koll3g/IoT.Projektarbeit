@@ -1,0 +1,7 @@
+*/*
+*.html
+
+!README
+!default/*
+!*/.gitignore
+!*/environment.h
