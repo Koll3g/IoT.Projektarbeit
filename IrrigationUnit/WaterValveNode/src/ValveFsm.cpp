@@ -43,7 +43,7 @@ void ValveChangerInit(LED *leds, QwiicButton *button) {
     ValveChangerInstance = new FSM(VALVE_ST_UNDEF, ValveChanger, &ValveChangerContext);
 }
 
-int  ColorChangerRun(void) {
+int  ValveChangerRun(void) {
     return ValveChangerInstance->run();
 }
 
@@ -88,8 +88,6 @@ static FSM_STATE_HANDLER(Closed) {
     }
     else if (reason == FSM_REASON_DO) {
         
-        
-
         //wait for button to be pressed to manually open the valve
         if (me->button->isPressed()) {
             fsm->NextStateSet(VALVE_ST_OPEN);

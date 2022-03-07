@@ -16,6 +16,8 @@
 
 #include "LedUtils.h"
 
+#include "ValveFsm.h"
+
 using namespace ZbW;
 using namespace ZbW::CommSubsystem;
 
@@ -52,6 +54,8 @@ void setup() {
   else {
     Serial.println("Peripherals initialized, continuing startup.");
   }
+
+  ValveChangerInit(_leds, _button);
 
   Serial.print("Resetting WiFi...");
   upstream.reset();
@@ -127,11 +131,14 @@ static void InitState2Text(bool state) {
 }
 
 void loop() {
-  CommunicationTask();
-  ButtonTask();
-  ToggleTask();
+  
+  ValveChangerRun();
+  //CommunicationTask();
+  //ButtonTask();
+  //ToggleTask();
 
   QwiicWatchDog();
+  delay(20);
 }
 
 static void CommunicationTask() {

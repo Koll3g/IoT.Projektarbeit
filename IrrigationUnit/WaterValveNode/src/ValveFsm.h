@@ -4,5 +4,5 @@
 #include <../lib/led/QwiicLedStick.h>
 #include <../lib/button/Sparkfun_Qwiic_Button.h>
 
-void ColorChangerInit(LED *leds, QwiicButton *button);
-int  ColorChangerRun(void);
+void ValveChangerInit(LED *leds, QwiicButton *button);
+int  ValveChangerRun(void);
