@@ -61,6 +61,7 @@ static FSM_STATE_HANDLER(Undef) {
         me->valveInitialized = true;
         Serial.println("Valve initialized");
 
+        //as a first step immediately close valve
         if(me->valveInitialized){
             fsm->NextStateSet(VALVE_ST_CLOSED);
         }
@@ -82,10 +83,12 @@ static FSM_STATE_HANDLER(Closed) {
         me->valveOpen = false;
 
         delay(2000);
+
+        Serial.println("Valve closed");
     }
     else if (reason == FSM_REASON_DO) {
         
-        Serial.println("Valve closed");
+        
 
         //wait for button to be pressed to manually open the valve
         if (me->button->isPressed()) {
@@ -99,22 +102,30 @@ static FSM_STATE_HANDLER(Closed) {
     return 0;
 }
 
-static FSM_STATE_HANDLER(Blue) {
+static FSM_STATE_HANDLER(Open) {
     tValveContext *me = (tValveContext *)context;
 
     if (reason == FSM_REASON_ENTER) {
-        Serial.println("Entering Blue");
+        Serial.println("Entering open Valve state");
+        
+        //Set LED and valve state to open
         me->leds->setLEDColor(0, 0, 255);
+        me->valveOpen = true;
+
         delay(2000);
+
+        Serial.println("Valve closed");
     }
     else if (reason == FSM_REASON_DO) {
+        
+        //wait for button to be pressed to manually close the valve
         if (me->button->isPressed()) {
-            fsm->NextStateSet(COLOR_CHANGER_ST_RED);
-            ButtonLedToggle(me);
+            fsm->NextStateSet(VALVE_ST_CLOSED);
+            ButtonValveToggle(me);
         }
     }
     else if (reason == FSM_REASON_EXIT) {
-        Serial.println("Exitting Blue");
+        Serial.println("Exitting open Valve state");
     }
     return 0;
 }
