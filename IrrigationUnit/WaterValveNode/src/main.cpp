@@ -42,9 +42,16 @@ static StopWatch    _i2ctimeout(200);
 static bool         _toggle = false;
 static bool         _buttonState = false;
 
+static String name = "Water Valve Node";
+
+//MQTT Settings
+static String topic = "Irrigation"; //Topic the node is listening to
+static int id = 0; //specific id for this node (topic inside topic defined above)
+static String subscriptionString = topic + "/" + id;
+
 void setup() {
   Serial.begin(115200);
-  Serial.println("Booting communication demo");
+  Serial.println("Booting: " + name + ", Node Id: " + id);
 
   bool init_success = QwiicPeripheralsInit();
   if (!init_success) {
@@ -75,18 +82,7 @@ void setup() {
   /* Register topic handlers. As The simplified MQTT client does not support 
      wild cards, we have to subscribe for every single LED explicitly. */
   {
-    mqtt.subscribe("demo/leds/all",   MQTT_MESSAGE_HANDLER_NAME(OnLedTopicReceived), 0);
-    mqtt.subscribe("demo/leds/0",     MQTT_MESSAGE_HANDLER_NAME(OnLedTopicReceived), 0);
-    mqtt.subscribe("demo/leds/1",     MQTT_MESSAGE_HANDLER_NAME(OnLedTopicReceived), 0);
-    mqtt.subscribe("demo/leds/2",     MQTT_MESSAGE_HANDLER_NAME(OnLedTopicReceived), 0);
-    mqtt.subscribe("demo/leds/3",     MQTT_MESSAGE_HANDLER_NAME(OnLedTopicReceived), 0);
-    mqtt.subscribe("demo/leds/4",     MQTT_MESSAGE_HANDLER_NAME(OnLedTopicReceived), 0);
-    mqtt.subscribe("demo/leds/5",     MQTT_MESSAGE_HANDLER_NAME(OnLedTopicReceived), 0);
-    mqtt.subscribe("demo/leds/6",     MQTT_MESSAGE_HANDLER_NAME(OnLedTopicReceived), 0);
-    mqtt.subscribe("demo/leds/7",     MQTT_MESSAGE_HANDLER_NAME(OnLedTopicReceived), 0);
-    mqtt.subscribe("demo/leds/8",     MQTT_MESSAGE_HANDLER_NAME(OnLedTopicReceived), 0);
-    mqtt.subscribe("demo/leds/9",     MQTT_MESSAGE_HANDLER_NAME(OnLedTopicReceived), 0);
-    mqtt.subscribe("demo/button/led", MQTT_MESSAGE_HANDLER_NAME(OnButtonLedTopicReceived), 0);
+    mqtt.subscribe(subscriptionString.c_str(),   MQTT_MESSAGE_HANDLER_NAME(OnValveTopicReceived), 0);
   }
 
   _timeout.start(1000);
@@ -133,9 +129,7 @@ static void InitState2Text(bool state) {
 void loop() {
   
   ValveChangerRun();
-  //CommunicationTask();
-  //ButtonTask();
-  //ToggleTask();
+  CommunicationTask();
 
   QwiicWatchDog();
   delay(20);
@@ -148,22 +142,8 @@ static void CommunicationTask() {
   }
 }
 
-static void ButtonTask() {
-  if (_buttonState != _button->isPressed()) {
-    _buttonState = !_buttonState;
-    mqtt.publish("demo/button/state", _buttonState ? "down" : "up");
-  }
-}
 
-static void ToggleTask() {
-  if (_timeout.isTimeout()) {
-    mqtt.publish("demo/toggle", _toggle ? "on" : "off");
-    _toggle = !_toggle;
-    _timeout.restart();
-  }
-}
-
-static MQTT_MESSAGE_HANDLER_DECLARE(OnLedTopicReceived) {
+static MQTT_MESSAGE_HANDLER_DECLARE(OnValveTopicReceived) {
   const char *instance = BasenameGet(topic);
   const char *message = (const char *)data;
   tRGB rgb;
