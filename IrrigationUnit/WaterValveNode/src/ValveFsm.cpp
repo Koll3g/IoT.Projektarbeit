@@ -107,12 +107,12 @@ static FSM_STATE_HANDLER(Open) {
         Serial.println("Entering open Valve state");
         
         //Set LED and valve state to open
-        me->leds->setLEDColor(0, 0, 255);
+        me->leds->setLEDColor(0, 255, 0);
         me->valveOpen = true;
 
         delay(2000);
 
-        Serial.println("Valve closed");
+        Serial.println("Valve open");
     }
     else if (reason == FSM_REASON_DO) {
         
