@@ -142,7 +142,6 @@ static void CommunicationTask() {
   }
 }
 
-
 static MQTT_MESSAGE_HANDLER_DECLARE(OnValveTopicReceived) {
   const char *instance = BasenameGet(topic);
   const char *message = (const char *)data;
@@ -157,19 +156,6 @@ static MQTT_MESSAGE_HANDLER_DECLARE(OnValveTopicReceived) {
   else {
     long ledNumber = strtol(instance, 0, 10);
     _leds->setLEDColor(ledNumber, rgb.comp.red, rgb.comp.green, rgb.comp.blue);
-  }
-}
-
-static MQTT_MESSAGE_HANDLER_DECLARE(OnButtonLedTopicReceived) {
-  const char *payload = (const char *)data;
-
-  LogMessage(topic, data, len);
-  
-  if (payload[0] == '0') {
-    _button->LEDoff();
-  }
-  else {
-    _button->LEDon(1);
   }
 }
 
