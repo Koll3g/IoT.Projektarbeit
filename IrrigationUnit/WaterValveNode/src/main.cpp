@@ -21,14 +21,11 @@
 using namespace ZbW;
 using namespace ZbW::CommSubsystem;
 
-static MQTT_MESSAGE_HANDLER_DECLARE(OnLedTopicReceived);
-static MQTT_MESSAGE_HANDLER_DECLARE(OnButtonLedTopicReceived);
+static MQTT_MESSAGE_HANDLER_DECLARE(OnValveTopicReceived);
 
 static bool QwiicPeripheralsInit();
 static void InitState2Text(bool state);
-static void ButtonTask();
 static void CommunicationTask();
-static void ToggleTask();
 static void QwiicWatchDog();
 static void LogMessage(const char *topic, const void *data, size_t len);
 
@@ -47,7 +44,9 @@ static String name = "Water Valve Node";
 //MQTT Settings
 static String topic = "Irrigation"; //Topic the node is listening to
 static int id = 0; //specific id for this node (topic inside topic defined above)
-static String subscriptionString = topic + "/" + id;
+static String subscriptionStringTarget = topic + "/" + id + "/Target";
+static String subscriptionStringActual = topic + "/" + id + "/Actual";
+static String reportingString = topic + "/" + id + "/Valve";
 
 void setup() {
   Serial.begin(115200);
@@ -82,7 +81,8 @@ void setup() {
   /* Register topic handlers. As The simplified MQTT client does not support 
      wild cards, we have to subscribe for every single LED explicitly. */
   {
-    mqtt.subscribe(subscriptionString.c_str(),   MQTT_MESSAGE_HANDLER_NAME(OnValveTopicReceived), 0);
+    mqtt.subscribe(subscriptionStringTarget.c_str(),   MQTT_MESSAGE_HANDLER_NAME(OnValveTopicReceived), 0);
+    mqtt.subscribe(subscriptionStringActual.c_str(),   MQTT_MESSAGE_HANDLER_NAME(OnValveTopicReceived), 0);
   }
 
   _timeout.start(1000);
@@ -149,13 +149,14 @@ static MQTT_MESSAGE_HANDLER_DECLARE(OnValveTopicReceived) {
 
   LogMessage(topic, data, len);
 
-  strntorgb(&rgb, message, len);
-  if (strcmp("all", instance) == 0) {
-    _leds->setLEDColor(rgb.comp.red, rgb.comp.green, rgb.comp.blue);    
+  if (strcmp("Target", instance) == 0) {
+    Serial.print("detected Target value: " + *message);
+  }
+  else if (strcmp("Actual", instance) == 0) {
+    Serial.print("detected Actual value: " + *message);
   }
   else {
-    long ledNumber = strtol(instance, 0, 10);
-    _leds->setLEDColor(ledNumber, rgb.comp.red, rgb.comp.green, rgb.comp.blue);
+    Serial.print("No target or actual value detected");
   }
 }
 

@@ -6,3 +6,6 @@
 
 void ValveChangerInit(LED *leds, QwiicButton *button);
 int  ValveChangerRun(void);
+
+void SetIrrigationTargetValue(int targetValue);
+void SetIrrigationActualValue(int actualValue);
