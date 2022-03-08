@@ -21,6 +21,7 @@
 
 #include "ValveFsm.h"
 
+#include "main.h"
 
 
 using namespace ZbW;
@@ -226,4 +227,13 @@ static bool SoilMoistureFromString(const char *message, uint* moisture){
     Serial.println(moistureCast);
     return false;
   }
+
+}
+
+void MqttUpdateValveState(String state){
+  mqtt.publish(reportingString.c_str(), state);
+  Serial.print("published new valve state to: ");
+  Serial.print(reportingString.c_str());
+  Serial.print(" with value: ");
+  Serial.println(state.c_str());
 }

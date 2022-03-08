@@ -4,6 +4,8 @@
 
 #include <Arduino.h>
 
+#include "main.h"
+
 typedef struct sValveContext {
     LED *leds; //Indicating status of valve -> green = open | red = closed | blue = undefined
     bool buttonOn;
@@ -83,10 +85,10 @@ static FSM_STATE_HANDLER(Closed) {
         //Set LED and valve state to closed
         me->leds->setLEDColor(255, 0, 0);
         me->valveOpen = false;
+        MqttUpdateValveState("closed");
+        Serial.println("Valve closed");
 
         delay(2000);
-
-        Serial.println("Valve closed");
     }
     else if (reason == FSM_REASON_DO) {
         
@@ -117,9 +119,10 @@ static FSM_STATE_HANDLER(Open) {
         me->leds->setLEDColor(0, 255, 0);
         me->valveOpen = true;
 
-        delay(2000);
-
+        MqttUpdateValveState("open");
         Serial.println("Valve open");
+
+        delay(2000);
     }
     else if (reason == FSM_REASON_DO) {
         
