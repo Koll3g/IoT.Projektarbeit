@@ -26,9 +26,7 @@ static bool QwiicPeripheralsInit();
 static void InitState2Text(bool state);
 static void ButtonTask();
 static void CommunicationTask();
-static void ToggleTask();
 static void QwiicWatchDog();
-static void LogMessage(const char *topic, const void *data, size_t len);
 
 static WiFiManager  upstream;
 static MqttClient   mqtt(upstream);
@@ -40,9 +38,16 @@ static StopWatch    _i2ctimeout(200);
 static bool         _toggle = false;
 static bool         _buttonState = false;
 
+static String name = "Soil Moisture Node";
+
+//MQTT Settings
+static String topic = "Irrigation"; //Topic the node is listening to
+static int id = 0; //specific id for this node (topic inside topic defined above)
+static String reportingString = topic + "/" + id + "/Actual";
+
 void setup() {
   Serial.begin(115200);
-  Serial.println("Booting communication demo");
+  Serial.println("Booting: " + name + ", Node Id: " + id);
 
   bool init_success = QwiicPeripheralsInit();
   if (!init_success) {
@@ -67,23 +72,6 @@ void setup() {
 
   Serial.println("Initiating connection to MQTT broker");
   mqtt.connect(MQTT_CLIENT_ID, MQTT_BROKER_IP, MQTT_BROKER_PORT);
-
-  /* Register topic handlers. As The simplified MQTT client does not support 
-     wild cards, we have to subscribe for every single LED explicitly. */
-  {
-    mqtt.subscribe("demo/leds/all",   MQTT_MESSAGE_HANDLER_NAME(OnLedTopicReceived), 0);
-    mqtt.subscribe("demo/leds/0",     MQTT_MESSAGE_HANDLER_NAME(OnLedTopicReceived), 0);
-    mqtt.subscribe("demo/leds/1",     MQTT_MESSAGE_HANDLER_NAME(OnLedTopicReceived), 0);
-    mqtt.subscribe("demo/leds/2",     MQTT_MESSAGE_HANDLER_NAME(OnLedTopicReceived), 0);
-    mqtt.subscribe("demo/leds/3",     MQTT_MESSAGE_HANDLER_NAME(OnLedTopicReceived), 0);
-    mqtt.subscribe("demo/leds/4",     MQTT_MESSAGE_HANDLER_NAME(OnLedTopicReceived), 0);
-    mqtt.subscribe("demo/leds/5",     MQTT_MESSAGE_HANDLER_NAME(OnLedTopicReceived), 0);
-    mqtt.subscribe("demo/leds/6",     MQTT_MESSAGE_HANDLER_NAME(OnLedTopicReceived), 0);
-    mqtt.subscribe("demo/leds/7",     MQTT_MESSAGE_HANDLER_NAME(OnLedTopicReceived), 0);
-    mqtt.subscribe("demo/leds/8",     MQTT_MESSAGE_HANDLER_NAME(OnLedTopicReceived), 0);
-    mqtt.subscribe("demo/leds/9",     MQTT_MESSAGE_HANDLER_NAME(OnLedTopicReceived), 0);
-    mqtt.subscribe("demo/button/led", MQTT_MESSAGE_HANDLER_NAME(OnButtonLedTopicReceived), 0);
-  }
 
   _timeout.start(1000);
   _i2ctimeout.start(1000);
@@ -129,9 +117,9 @@ static void InitState2Text(bool state) {
 void loop() {
   CommunicationTask();
   ButtonTask();
-  ToggleTask();
 
   QwiicWatchDog();
+  delay(20);
 }
 
 static void CommunicationTask() {
@@ -146,56 +134,6 @@ static void ButtonTask() {
     _buttonState = !_buttonState;
     mqtt.publish("demo/button/state", _buttonState ? "down" : "up");
   }
-}
-
-static void ToggleTask() {
-  if (_timeout.isTimeout()) {
-    mqtt.publish("demo/toggle", _toggle ? "on" : "off");
-    _toggle = !_toggle;
-    _timeout.restart();
-  }
-}
-
-static MQTT_MESSAGE_HANDLER_DECLARE(OnLedTopicReceived) {
-  const char *instance = BasenameGet(topic);
-  const char *message = (const char *)data;
-  tRGB rgb;
-
-  LogMessage(topic, data, len);
-
-  strntorgb(&rgb, message, len);
-  if (strcmp("all", instance) == 0) {
-    _leds->setLEDColor(rgb.comp.red, rgb.comp.green, rgb.comp.blue);    
-  }
-  else {
-    long ledNumber = strtol(instance, 0, 10);
-    _leds->setLEDColor(ledNumber, rgb.comp.red, rgb.comp.green, rgb.comp.blue);
-  }
-}
-
-static MQTT_MESSAGE_HANDLER_DECLARE(OnButtonLedTopicReceived) {
-  const char *payload = (const char *)data;
-
-  LogMessage(topic, data, len);
-  
-  if (payload[0] == '0') {
-    _button->LEDoff();
-  }
-  else {
-    _button->LEDon(1);
-  }
-}
-
-static void LogMessage(const char *topic, const void *data, size_t len) {
-  const char *message = (const char *)data;
-  
-  Serial.print("Topic: '");
-  Serial.print(topic);
-  Serial.print("' Message: '");
-  for (int i = 0;i < len;i++) {
-    Serial.print(message[i]);
-  }
-  Serial.println("'");
 }
 
 /**
