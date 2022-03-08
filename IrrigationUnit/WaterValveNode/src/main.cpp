@@ -149,10 +149,10 @@ static MQTT_MESSAGE_HANDLER_DECLARE(OnValveTopicReceived) {
 
   LogMessage(topic, data, len);
 
-  if (strcmp("Target", instance) == 0) {
+  if (strcmp(subscriptionStringTarget.c_str(), instance) == 0) {
     Serial.print("detected Target value: " + *message);
   }
-  else if (strcmp("Actual", instance) == 0) {
+  else if (strcmp(subscriptionStringTarget.c_str(), instance) == 0) {
     Serial.print("detected Actual value: " + *message);
   }
   else {
