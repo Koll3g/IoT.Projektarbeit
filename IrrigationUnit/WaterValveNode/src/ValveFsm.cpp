@@ -90,8 +90,13 @@ static FSM_STATE_HANDLER(Closed) {
     }
     else if (reason == FSM_REASON_DO) {
         
+        //wait for actualMoisture to drop below target moisture
+        if(me->TargetMoistureValue > me->ActualMoistureValue){
+            Serial.println("Actual Moisture has dropped below Target Moisture -> Open Valve");
+            fsm->NextStateSet(VALVE_ST_OPEN);
+        }
         //wait for button to be pressed to manually open the valve
-        if (me->button->isPressed()) {
+        else if (me->button->isPressed()) {
             fsm->NextStateSet(VALVE_ST_OPEN);
             ButtonValveToggle(me);
         }
@@ -118,8 +123,13 @@ static FSM_STATE_HANDLER(Open) {
     }
     else if (reason == FSM_REASON_DO) {
         
+        //wait for actualMoisture to drop below target moisture
+        if(me->TargetMoistureValue < me->ActualMoistureValue){
+            Serial.println("Actual Moisture is now above Target Moisture -> Closing Valve");
+            fsm->NextStateSet(VALVE_ST_CLOSED);
+        }
         //wait for button to be pressed to manually close the valve
-        if (me->button->isPressed()) {
+        else if (me->button->isPressed()) {
             fsm->NextStateSet(VALVE_ST_CLOSED);
             ButtonValveToggle(me);
         }
