@@ -4,6 +4,9 @@
 #include <MQTT/MqttClient.h>
 #include <StopWatch.h>
 
+#include <iostream>
+#include <sstream>
+
 #include <Sparkfun_Qwiic_Button.h>
 #include <QwiicLedStick.h>
 
@@ -18,6 +21,8 @@
 
 #include "ValveFsm.h"
 
+
+
 using namespace ZbW;
 using namespace ZbW::CommSubsystem;
 
@@ -28,6 +33,7 @@ static void InitState2Text(bool state);
 static void CommunicationTask();
 static void QwiicWatchDog();
 static void LogMessage(const char *topic, const void *data, size_t len);
+static bool SoilMoistureFromString(const char *message, uint* moisture);
 
 static WiFiManager  upstream;
 static MqttClient   mqtt(upstream);
@@ -36,7 +42,6 @@ static LED *        _leds;
 static QwiicButton *_button;
 static StopWatch    _timeout(1000);
 static StopWatch    _i2ctimeout(200);
-static bool         _toggle = false;
 static bool         _buttonState = false;
 
 static String name = "Water Valve Node";
@@ -150,9 +155,21 @@ static MQTT_MESSAGE_HANDLER_DECLARE(OnValveTopicReceived) {
 
   if (strcmp(subscriptionStringTarget.c_str(), topic) == 0) {
     Serial.println("received updated target value");
+
+    //Convert string to int & check if value makes sense
+    uint targetMoisture;
+    if(SoilMoistureFromString(message, &targetMoisture)){
+      SetTargetMoistureValue(targetMoisture); //Set "real" TargetMoistureValue
+    }
   }
   else if (strcmp(subscriptionStringActual.c_str(), topic) == 0) {
     Serial.println("received updated actual value");
+
+    //Convert string to int & check if value makes sense
+    uint actualMoisture;
+    if(SoilMoistureFromString(message, &actualMoisture)){
+      SetActualMoistureValue(actualMoisture); //Set "real" ActualtMoistureValue
+    }
   }
   else {
     Serial.println("No target or actual value detected");
@@ -189,5 +206,24 @@ static void QwiicWatchDog() {
       QwiicPeripheralsInit();
       break;
     }
+  }
+}
+
+static bool SoilMoistureFromString(const char *message, uint* moisture){
+  
+  //if message was once i.e. 4 digits long, it will always add 0 in the back, even if the next value is only 2 digits long!
+  std::stringstream ss(message);
+  uint moistureCast;
+
+  if(ss >> moistureCast && moistureCast >= 0 && moistureCast <= 100){
+    *moisture = moistureCast;
+    Serial.print("moisture value is valid - Value: ");
+    Serial.println(moistureCast);
+    return true;
+  }
+  else{
+    Serial.print("moisture value invalid! - Value: ");
+    Serial.println(moistureCast);
+    return false;
   }
 }

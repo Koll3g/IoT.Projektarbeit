@@ -9,6 +9,8 @@ typedef struct sValveContext {
     bool buttonOn;
     bool valveOpen; //Assume valve would move according to this bool -> true = open
     bool valveInitialized; 
+    uint TargetMoistureValue = 50; //default value if cloud is not available - basic irrigation ensured
+    uint ActualMoistureValue = 50; //default value, in case soil moisture sensor is offline  we do not want to flood the field
     QwiicButton *button;
 }tValveContext;
 
@@ -34,7 +36,7 @@ static const tFSM_State ValveChanger[] = {
     FSM_STATE_LAST()
 };
 
-static tValveContext ValveChangerContext = { 0 };
+static tValveContext ValveChangerContext;
 static FSM *ValveChangerInstance;
 
 void ValveChangerInit(LED *leds, QwiicButton *button) {
@@ -136,4 +138,11 @@ static void ButtonValveToggle(tValveContext *me) {
     me->button->LEDconfig(0, 0, 0);
   }
   me->buttonOn = !me->buttonOn;
+}
+
+void SetTargetMoistureValue(uint targetMoisture){
+    ValveChangerContext.TargetMoistureValue = targetMoisture;
+}
+void SetActualMoistureValue(uint actualMoisture){
+    ValveChangerContext.ActualMoistureValue = actualMoisture;
 }

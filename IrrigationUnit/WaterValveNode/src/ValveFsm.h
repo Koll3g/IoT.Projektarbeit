@@ -7,5 +7,10 @@
 void ValveChangerInit(LED *leds, QwiicButton *button);
 int  ValveChangerRun(void);
 
-void SetIrrigationTargetValue(int targetValue);
-void SetIrrigationActualValue(int actualValue);
+//Values written by mqtt 
+//uint TargetMoistureValue = 50; //default value if cloud is not available - basic irrigation ensured
+//uint ActualMoistureValue = 50; //default value, in case soil moisture sensor is offline  we do not want to flood the field
+
+void SetTargetMoistureValue(uint targetMoisture);
+void SetActualMoistureValue(uint actualMoisture);
+
