@@ -145,18 +145,17 @@ static void CommunicationTask() {
 static MQTT_MESSAGE_HANDLER_DECLARE(OnValveTopicReceived) {
   const char *instance = BasenameGet(topic);
   const char *message = (const char *)data;
-  tRGB rgb;
 
   LogMessage(topic, data, len);
 
-  if (strcmp(subscriptionStringTarget.c_str(), instance) == 0) {
-    Serial.print("detected Target value: " + *message);
+  if (strcmp(subscriptionStringTarget.c_str(), topic) == 0) {
+    Serial.println("received updated target value");
   }
-  else if (strcmp(subscriptionStringTarget.c_str(), instance) == 0) {
-    Serial.print("detected Actual value: " + *message);
+  else if (strcmp(subscriptionStringActual.c_str(), topic) == 0) {
+    Serial.println("received updated actual value");
   }
   else {
-    Serial.print("No target or actual value detected");
+    Serial.println("No target or actual value detected");
   }
 }
 
