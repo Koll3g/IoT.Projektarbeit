@@ -125,9 +125,9 @@ static void InitState2Text(bool state) {
 void loop() {
   CommunicationTask();
   //ButtonTask();
-  _soilSens->getValue();
+  _soilSens->getPercentageValue();
   QwiicWatchDog();
-  delay(100);
+  delay(1000);
 }
 
 static void CommunicationTask() {
@@ -145,7 +145,7 @@ static void ButtonTask() {
 }
 
 static void MeasureSoilMoistureTask(){
-  
+
 }
 
 

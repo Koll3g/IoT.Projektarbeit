@@ -14,7 +14,7 @@ SoilSens::SoilSens() {
   _soilSensAddress = 0;
 
   //based on measurements defined limits 
-  _upperAdcLimit = 600;
+  _upperAdcLimit = 650;
   _lowerAdcLimit = 90;
 }
 
@@ -73,11 +73,22 @@ uint8_t SoilSens::getPercentageValue(){
 
   //Calculate percentage value
   adcValue = adcValue - _lowerAdcLimit;
-  uint16_t adcRange = _upperAdcLimit - _lowerAdcLimit;
-  float_t dryPercentageValue = adcValue / adcRange;
-  float_t wetPercentageValue = 1-dryPercentageValue;
-  uint8_t percentageValue = wetPercentageValue * 100;
+  Serial.print("zeroed ADC Value:  ");
+  Serial.println(adcValue);
 
+  uint16_t adcRange = _upperAdcLimit - _lowerAdcLimit;
+  Serial.print("ADC Range:  ");
+  Serial.println(adcRange);
+
+  double dryPercentageValue = (double)adcValue / adcRange;
+  Serial.print("dryPercentage:  ");
+  Serial.println(dryPercentageValue);  
+
+  double wetPercentageValue = 1.0-dryPercentageValue;
+  Serial.print("wetPercentage:  ");
+  Serial.println(wetPercentageValue);
+
+  uint8_t percentageValue = wetPercentageValue * 100;
   Serial.print("Percentage Value:  ");
   Serial.println(percentageValue);
 
