@@ -16,6 +16,8 @@
 
 #include "LedUtils.h"
 
+#include "soilSens/QwiicSoilMoistureSensor.h"
+
 using namespace ZbW;
 using namespace ZbW::CommSubsystem;
 
@@ -24,12 +26,14 @@ static void InitState2Text(bool state);
 static void ButtonTask();
 static void CommunicationTask();
 static void QwiicWatchDog();
+static void MeasureSoilMoistureTask();
 
 static WiFiManager  upstream;
 static MqttClient   mqtt(upstream);
 
 static LED *        _leds;
 static QwiicButton *_button;
+static SoilSens *   _soilSens;
 static StopWatch    _timeout(1000);
 static StopWatch    _i2ctimeout(200);
 static bool         _buttonState = false;
@@ -103,6 +107,14 @@ bool QwiicPeripheralsInit() {
     InitState2Text(init_success);
   }
 
+  Serial.print("Initializing Soil Moisture Sensor...");
+  {
+    _soilSens = new SoilSens();
+    init_success = init_success 
+                && _soilSens->begin();
+    InitState2Text(init_success);
+  }
+
   return init_success;
 }
 
@@ -112,10 +124,10 @@ static void InitState2Text(bool state) {
 
 void loop() {
   CommunicationTask();
-  ButtonTask();
-
+  //ButtonTask();
+  _soilSens->getValue();
   QwiicWatchDog();
-  delay(20);
+  delay(100);
 }
 
 static void CommunicationTask() {
@@ -131,6 +143,11 @@ static void ButtonTask() {
     mqtt.publish("demo/button/state", _buttonState ? "down" : "up");
   }
 }
+
+static void MeasureSoilMoistureTask(){
+  
+}
+
 
 /**
  * @brief Monitors the QWIIC bus state and resets the bus in case it is hung

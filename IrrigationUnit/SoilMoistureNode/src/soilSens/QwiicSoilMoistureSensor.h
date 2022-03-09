@@ -1,9 +1,9 @@
 /*
-	Interface for Qwiic Soil Moisture Sensor
-	========================================
+	Interface for Qwiic Soil Moisture Sensor                   By Angelo, March 8th, 2022
+	=====================================================================================
 	Based on QwiicLedStick Library By Ciara Jekel @ SparkFun Electronics, June 11th, 2018 
 	& 
-	Zio Qwiic Soil Moisture Sensor Example 1 - Basic Reading By Harry September 25, 2018
+	Zio Qwiic Soil Moisture Sensor Example 1 - Basic Reading By Harry, September 25, 2018
 */
 
 #ifndef Qwiic_SoilSens_h
@@ -28,21 +28,25 @@ class SoilSens
 	//Test I2C connection on I2C address
 	boolean isConnected();
 
-	//Read value from the sensor
-	void getValue();
+	//Returns value between 0 and 1023 (raw sensor reading)
+	uint16_t getAdcValue();
+
+	//Returns value between 0 and 100 based on limits
+	uint8_t getPercentageValue(); 
 
 	//Turn LED on Sensor ON or OFF
 	void ledOn();
 	void ledOff();
-
-	//Change the I2C address from one address to another
-	boolean changeAddress(uint8_t newAddress);
 
   private:
 	//This stores the current I2C address of the LED Stick
 	uint8_t _soilSensAddress;
 	//This stores the requested i2c port
 	TwoWire * _i2cPort;
+
+	uint16_t _upperAdcLimit; //Represents 0% soil moisture
+
+	uint16_t _lowerAdcLimit; //Represents 100% soil moisture
 }; 
 
 #endif
