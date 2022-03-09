@@ -149,8 +149,14 @@ static void CommunicationTask() {
 }
 
 static MQTT_MESSAGE_HANDLER_DECLARE(OnValveTopicReceived) {
-  const char *instance = BasenameGet(topic);
-  const char *message = (const char *)data;
+ 
+ const char *instance = BasenameGet(topic);
+
+  char message[len] ;
+  memset(&message, '\0', len);
+
+  memcpy(&message, data, len);
+  // message  = (const char *)data;
 
   LogMessage(topic, data, len);
 
@@ -158,7 +164,10 @@ static MQTT_MESSAGE_HANDLER_DECLARE(OnValveTopicReceived) {
     Serial.println("received updated target value");
 
     //Convert string to int & check if value makes sense
+    
     uint targetMoisture;
+
+
     if(SoilMoistureFromString(message, &targetMoisture)){
       SetTargetMoistureValue(targetMoisture); //Set "real" TargetMoistureValue
     }
