@@ -9,6 +9,8 @@
 
 #include <cstring>
 
+#include<sstream>
+
 #include <config/secrets.h>
 #include <config/mqtt.h>
 
@@ -23,7 +25,6 @@ using namespace ZbW::CommSubsystem;
 
 static bool QwiicPeripheralsInit();
 static void InitState2Text(bool state);
-static void ButtonTask();
 static void CommunicationTask();
 static void QwiicWatchDog();
 static void MeasureSoilMoistureTask();
@@ -37,6 +38,8 @@ static SoilSens *   _soilSens;
 static StopWatch    _timeout(1000);
 static StopWatch    _i2ctimeout(200);
 static bool         _buttonState = false;
+unsigned long       _lastTimePublished = 0;
+uint16_t            _publishFrequency = 5000; //time in milliseconds
 
 static String name = "Soil Moisture Node";
 
@@ -124,10 +127,9 @@ static void InitState2Text(bool state) {
 
 void loop() {
   CommunicationTask();
-  //ButtonTask();
-  _soilSens->getPercentageValue();
+  MeasureSoilMoistureTask();
   QwiicWatchDog();
-  delay(1000);
+  delay(20);
 }
 
 static void CommunicationTask() {
@@ -137,15 +139,22 @@ static void CommunicationTask() {
   }
 }
 
-static void ButtonTask() {
-  if (_buttonState != _button->isPressed()) {
-    _buttonState = !_buttonState;
-    mqtt.publish("demo/button/state", _buttonState ? "down" : "up");
-  }
-}
-
 static void MeasureSoilMoistureTask(){
+  //make sure it does not spam constantly the soilMoisture (nicer would be using a timer and semiphore though)
+  if(millis() > _lastTimePublished + _publishFrequency){
+    _lastTimePublished = millis();
+    
+    //get value, convert to string
+    uint8_t soilMoisture = _soilSens->getPercentageValue();
+    String soilMoistureStr = String(soilMoisture);
 
+    mqtt.publish(reportingString.c_str(), soilMoistureStr.c_str());
+
+    Serial.print("published new soil moisture to: ");
+    Serial.print(reportingString.c_str());
+    Serial.print(" with value: ");
+    Serial.println(soilMoistureStr.c_str());
+  }
 }
 
 
