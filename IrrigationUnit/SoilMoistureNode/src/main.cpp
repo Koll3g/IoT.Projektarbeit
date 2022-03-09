@@ -19,9 +19,6 @@
 using namespace ZbW;
 using namespace ZbW::CommSubsystem;
 
-static MQTT_MESSAGE_HANDLER_DECLARE(OnLedTopicReceived);
-static MQTT_MESSAGE_HANDLER_DECLARE(OnButtonLedTopicReceived);
-
 static bool QwiicPeripheralsInit();
 static void InitState2Text(bool state);
 static void ButtonTask();
@@ -35,7 +32,6 @@ static LED *        _leds;
 static QwiicButton *_button;
 static StopWatch    _timeout(1000);
 static StopWatch    _i2ctimeout(200);
-static bool         _toggle = false;
 static bool         _buttonState = false;
 
 static String name = "Soil Moisture Node";
