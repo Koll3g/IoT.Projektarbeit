@@ -136,8 +136,8 @@ static FSM_STATE_HANDLER(Open) {
         //Problem: this would create an endless loop as we don't have any other measure to cool beside opening the windows
 
         //Check inside temp vs. outside temp
-        if(me->TargetTempValue > me->ActualInteriorTempValue){
-            Serial.println("Inside temperature below target temperature - close windows");
+        if(me->TargetTempValue >= me->ActualInteriorTempValue){
+            Serial.println("Inside temperature at or below target temperature - close windows");
             fsm->NextStateSet(WINDOW_ST_CLOSED);
         }
         //wait for button to be pressed to manually open the Window
