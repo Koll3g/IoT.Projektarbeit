@@ -57,8 +57,8 @@ uint16_t SoilSens::getAdcValue() {
   }
 
   uint16_t x=Wire.read(); 
-  Serial.print("X:  ");
-  Serial.println(x,DEC);
+  // Serial.print("X:  ");
+  // Serial.println(x,DEC);
   return _ADC_VALUE;
 }
 
@@ -76,20 +76,20 @@ uint8_t SoilSens::getPercentageValue(){
 
   //Calculate percentage value
   adcValue = adcValue - _lowerAdcLimit;
-  Serial.print("zeroed ADC Value:  ");
-  Serial.println(adcValue);
+  // Serial.print("zeroed ADC Value:  ");
+  // Serial.println(adcValue);
 
   uint16_t adcRange = _upperAdcLimit - _lowerAdcLimit;
-  Serial.print("ADC Range:  ");
-  Serial.println(adcRange);
+  // Serial.print("ADC Range:  ");
+  // Serial.println(adcRange);
 
   double dryPercentageValue = (double)adcValue / adcRange;
-  Serial.print("dryPercentage:  ");
-  Serial.println(dryPercentageValue);  
+  // Serial.print("dryPercentage:  ");
+  // Serial.println(dryPercentageValue);  
 
   double wetPercentageValue = 1.0-dryPercentageValue;
-  Serial.print("wetPercentage:  ");
-  Serial.println(wetPercentageValue);
+  // Serial.print("wetPercentage:  ");
+  // Serial.println(wetPercentageValue);
 
   uint8_t percentageValue = wetPercentageValue * 100;
   Serial.print("Percentage Value:  ");
