@@ -1,4 +1,4 @@
-#include "ValveFsm.h"
+#include "WindowFsm.h"
 
 #include <../lib/fsm/fsm.h>
 
@@ -6,121 +6,127 @@
 
 #include "main.h"
 
-typedef struct sValveContext {
-    LED *leds; //Indicating status of valve -> green = open | red = closed | blue = undefined
+typedef struct sWindowContext {
+    LED *leds; //Indicating status of Window -> green = open | red = closed | blue = undefined
     bool buttonOn;
-    bool valveOpen; //Assume valve would move according to this bool -> true = open
-    bool valveInitialized; 
-    uint TargetMoistureValue = 50; //default value if cloud is not available - basic irrigation ensured
-    uint ActualMoistureValue = 50; //default value, in case soil moisture sensor is offline  we do not want to flood the field
+    bool WindowOpen; //Assume Window would move according to this bool -> true = open
+    bool WindowInitialized; 
+    uint TargetTempValue = 25; //default value if cloud is not available
+    uint ActualInteriorTempValue = 25; //default value
+    uint ActualExteriorTempValue = 25; //default value
     QwiicButton *button;
-}tValveContext;
+}tWindowContext;
 
-typedef enum eValveState {
-    VALVE_ST_UNDEF = 0,
-    VALVE_ST_CLOSED,
-    VALVE_ST_OPEN,
+typedef enum eWindowState {
+    WINDOW_ST_UNDEF = 0,
+    WINDOW_ST_CLOSED,
+    WINDOW_ST_OPEN,
     
-    VALVE_ST_COUNT
-}tValveState;
+    WINDOW_ST_COUNT
+}tWindowState;
 
-static void ButtonValveToggle(tValveContext *me);
+static void ButtoWindowToggle(tWindowContext *me);
 
 static FSM_STATE_HANDLER(Undef);
 static FSM_STATE_HANDLER(Closed);
 static FSM_STATE_HANDLER(Open);
 
-static const tFSM_State ValveChanger[] = {
-    FSM_STATE_DESCRIBE("Water Valve undefined", Undef),
-    FSM_STATE_DESCRIBE("Water Valve closed", Closed),
-    FSM_STATE_DESCRIBE("Water Valve open", Open),
+static const tFSM_State WindowChanger[] = {
+    FSM_STATE_DESCRIBE("Window Position undefined", Undef),
+    FSM_STATE_DESCRIBE("Window closed", Closed),
+    FSM_STATE_DESCRIBE("Window open", Open),
 
     FSM_STATE_LAST()
 };
 
-static tValveContext ValveChangerContext;
-static FSM *ValveChangerInstance;
+static tWindowContext WindowChangerContext;
+static FSM *WindowChangerInstance;
 
-void ValveChangerInit(LED *leds, QwiicButton *button) {
-    ValveChangerContext.leds = leds;
-    ValveChangerContext.button = button;
-    ValveChangerInstance = new FSM(VALVE_ST_UNDEF, ValveChanger, &ValveChangerContext);
+void WindowChangerInit(LED *leds, QwiicButton *button) {
+    WindowChangerContext.leds = leds;
+    WindowChangerContext.button = button;
+    WindowChangerInstance = new FSM(WINDOW_ST_UNDEF, WindowChanger, &WindowChangerContext);
 }
 
-int  ValveChangerRun(void) {
-    return ValveChangerInstance->run();
+int  WindowChangerRun(void) {
+    return WindowChangerInstance->run();
 }
 
 static FSM_STATE_HANDLER(Undef) {
-    tValveContext *me = (tValveContext *)context;
+    tWindowContext *me = (tWindowContext *)context;
 
     if (reason == FSM_REASON_ENTER) {
-        Serial.println("Entering undefined Valve state - initializing");
+        Serial.println("Entering undefined Window state - initializing");
         me->leds->setLEDColor(0,0,255);
         delay(2000);
     }
     else if (reason == FSM_REASON_DO) {
         
-        //do something to initialize valve sub-system
-        me->valveInitialized = true;
-        Serial.println("Valve initialized");
+        //do something to initialize Window sub-system
+        me->WindowInitialized = true;
+        Serial.println("Window initialized");
 
-        //as a first step immediately close valve
-        if(me->valveInitialized){
-            fsm->NextStateSet(VALVE_ST_CLOSED);
+        //as a first step immediately close Window
+        if(me->WindowInitialized){
+            fsm->NextStateSet(WINDOW_ST_CLOSED);
         }
     }
     else if (reason == FSM_REASON_EXIT) {
-        Serial.println("Exitting undefined Valve state");
+        Serial.println("Exitting undefined Window state");
     }
     return 0;
 }
 
 static FSM_STATE_HANDLER(Closed) {
-    tValveContext *me = (tValveContext *)context;
+    tWindowContext *me = (tWindowContext *)context;
 
     if (reason == FSM_REASON_ENTER) {
-        Serial.println("Entering closed Valve state");
+        Serial.println("Entering closed Window state");
         
-        //Set LED and valve state to closed
+        //Set LED and Window state to closed
         me->leds->setLEDColor(255, 0, 0);
-        me->valveOpen = false;
-        MqttUpdateValveState("closed");
-        Serial.println("Valve closed");
+        me->WindowOpen = false;
+        MqttUpdateWindowState("closed");
+        Serial.println("Window closed");
 
         delay(2000);
     }
     else if (reason == FSM_REASON_DO) {
         
+        if(me->TargetTempValue < me->ActualInteriorTempValue ){
+
+        }
+
+
         //wait for actualMoisture to drop below target moisture
         if(me->TargetMoistureValue > me->ActualMoistureValue){
-            Serial.println("Actual Moisture has dropped below Target Moisture -> Open Valve");
-            fsm->NextStateSet(VALVE_ST_OPEN);
+            Serial.println("Actual Moisture has dropped below Target Moisture -> Open Window");
+            fsm->NextStateSet(WINDOW_ST_OPEN);
         }
-        //wait for button to be pressed to manually open the valve
+        //wait for button to be pressed to manually open the Window
         else if (me->button->isPressed()) {
-            fsm->NextStateSet(VALVE_ST_OPEN);
-            ButtonValveToggle(me);
+            fsm->NextStateSet(WINDOW_ST_OPEN);
+            ButtonWindowToggle(me);
         }
     }
     else if (reason == FSM_REASON_EXIT) {
-        Serial.println("Exitting closed Valve state");
+        Serial.println("Exitting closed Window state");
     }
     return 0;
 }
 
 static FSM_STATE_HANDLER(Open) {
-    tValveContext *me = (tValveContext *)context;
+    tWindowContext *me = (tWindowContext *)context;
 
     if (reason == FSM_REASON_ENTER) {
-        Serial.println("Entering open Valve state");
+        Serial.println("Entering open Window state");
         
-        //Set LED and valve state to open
+        //Set LED and Window state to open
         me->leds->setLEDColor(0, 255, 0);
-        me->valveOpen = true;
+        me->WindowOpen = true;
 
-        MqttUpdateValveState("open");
-        Serial.println("Valve open");
+        MqttUpdateWindowState("open");
+        Serial.println("Window open");
 
         delay(2000);
     }
@@ -128,22 +134,22 @@ static FSM_STATE_HANDLER(Open) {
         
         //wait for actualMoisture to drop below target moisture
         if(me->TargetMoistureValue < me->ActualMoistureValue){
-            Serial.println("Actual Moisture is now above Target Moisture -> Closing Valve");
-            fsm->NextStateSet(VALVE_ST_CLOSED);
+            Serial.println("Actual Moisture is now above Target Moisture -> Closing Window");
+            fsm->NextStateSet(WINDOW_ST_CLOSED);
         }
-        //wait for button to be pressed to manually close the valve
+        //wait for button to be pressed to manually close the Window
         else if (me->button->isPressed()) {
-            fsm->NextStateSet(VALVE_ST_CLOSED);
-            ButtonValveToggle(me);
+            fsm->NextStateSet(WINDOW_ST_CLOSED);
+            ButtonWindowToggle(me);
         }
     }
     else if (reason == FSM_REASON_EXIT) {
-        Serial.println("Exitting open Valve state");
+        Serial.println("Exitting open Window state");
     }
     return 0;
 }
 
-static void ButtonValveToggle(tValveContext *me) {
+static void ButtonWindowToggle(tWindowContext *me) {
   if (!me->buttonOn) {
     me->button->LEDconfig(1, 0, 0);
   }
@@ -154,8 +160,8 @@ static void ButtonValveToggle(tValveContext *me) {
 }
 
 void SetTargetMoistureValue(uint targetMoisture){
-    ValveChangerContext.TargetMoistureValue = targetMoisture;
+    WindowChangerContext.TargetMoistureValue = targetMoisture;
 }
 void SetActualMoistureValue(uint actualMoisture){
-    ValveChangerContext.ActualMoistureValue = actualMoisture;
+    WindowChangerContext.ActualMoistureValue = actualMoisture;
 }
