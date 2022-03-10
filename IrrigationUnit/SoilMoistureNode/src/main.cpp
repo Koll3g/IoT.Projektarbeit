@@ -201,10 +201,11 @@ static void ShowMoistureOnLeds(){
 
   //turn all leds off
   _leds->LEDOff();
-
+  delay(50);
   //turn leds on accordingly
-  for(int i=1; i<ledCount+1; i++){
+  for(int i=0; i<ledCount; i++){
     _leds->setLEDColor(i, 0,0,255);
+    delay(50);
   }
 
   Serial.print("Turned ");

@@ -57,6 +57,9 @@ uint16_t SoilSens::getAdcValue() {
   }
 
   uint16_t x=Wire.read(); 
+  Serial.print("X:  ");
+  Serial.println(x,DEC);
+  return _ADC_VALUE;
 }
 
 uint8_t SoilSens::getPercentageValue(){
