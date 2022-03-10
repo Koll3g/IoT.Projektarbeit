@@ -93,15 +93,16 @@ static FSM_STATE_HANDLER(Closed) {
     }
     else if (reason == FSM_REASON_DO) {
         
-        if(me->TargetTempValue < me->ActualInteriorTempValue ){
-
-        }
-
-
-        //wait for actualMoisture to drop below target moisture
-        if(me->TargetMoistureValue > me->ActualMoistureValue){
-            Serial.println("Actual Moisture has dropped below Target Moisture -> Open Window");
-            fsm->NextStateSet(WINDOW_ST_OPEN);
+        //Check inside temp vs. outside temp
+        if(me->TargetTempValue < me->ActualInteriorTempValue){
+            //Make sure outside is not even warmer than inside
+            if(me->ActualInteriorTempValue < me->ActualExteriorTempValue){
+                Serial.println("Inside temperature above target, but outside is even warmer - abort window opening");
+            }
+            else{
+                Serial.println("Inside temperature above target temperature - open windows as outside is cooler");
+                fsm->NextStateSet(WINDOW_ST_OPEN);
+            }
         }
         //wait for button to be pressed to manually open the Window
         else if (me->button->isPressed()) {
@@ -131,15 +132,17 @@ static FSM_STATE_HANDLER(Open) {
         delay(2000);
     }
     else if (reason == FSM_REASON_DO) {
-        
-        //wait for actualMoisture to drop below target moisture
-        if(me->TargetMoistureValue < me->ActualMoistureValue){
-            Serial.println("Actual Moisture is now above Target Moisture -> Closing Window");
-            fsm->NextStateSet(WINDOW_ST_CLOSED);
+        //Thought about case where outside is becoming warmer than inside -> should we close the windows again? 
+        //Problem: this would create an endless loop as we don't have any other measure to cool beside opening the windows
+
+        //Check inside temp vs. outside temp
+        if(me->TargetTempValue > me->ActualInteriorTempValue){
+            Serial.println("Inside temperature below target temperature - close windows");
+            fsm->NextStateSet(WINDOW_ST_OPEN);
         }
-        //wait for button to be pressed to manually close the Window
+        //wait for button to be pressed to manually open the Window
         else if (me->button->isPressed()) {
-            fsm->NextStateSet(WINDOW_ST_CLOSED);
+            fsm->NextStateSet(WINDOW_ST_OPEN);
             ButtonWindowToggle(me);
         }
     }
@@ -159,9 +162,12 @@ static void ButtonWindowToggle(tWindowContext *me) {
   me->buttonOn = !me->buttonOn;
 }
 
-void SetTargetMoistureValue(uint targetMoisture){
-    WindowChangerContext.TargetMoistureValue = targetMoisture;
+void SetTargetTempWindow(uint targetTemperature){
+    WindowChangerContext.TargetTempValue = targetTemperature;
 }
-void SetActualMoistureValue(uint actualMoisture){
-    WindowChangerContext.ActualMoistureValue = actualMoisture;
+void SetActualInteriorTempWindow(uint actualInteriorTemperature){
+    WindowChangerContext.ActualInteriorTempValue = actualInteriorTemperature;
+}
+void SetActualExteriorTempWindow(uint actualExteriorTemperature){
+    WindowChangerContext.ActualExteriorTempValue = actualExteriorTemperature;
 }
