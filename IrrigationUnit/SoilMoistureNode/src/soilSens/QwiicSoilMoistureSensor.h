@@ -38,6 +38,9 @@ class SoilSens
 	void ledOn();
 	void ledOff();
 
+	//Calibrate system by setting "dry" (0%) soil moisture value
+	void setUpperAdcLimit(uint16_t value);
+
   private:
 	//This stores the current I2C address of the LED Stick
 	uint8_t _soilSensAddress;

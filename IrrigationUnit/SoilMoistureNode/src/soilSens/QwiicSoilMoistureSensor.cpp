@@ -107,3 +107,9 @@ void SoilSens::ledOff() {
   Wire.endTransmission();
 }
 
+void SoilSens::setUpperAdcLimit(uint16_t value) {
+  _upperAdcLimit = value;
+  Serial.print("Set upperAdcLimit (0% moisture) to ");
+  Serial.println(value);
+}
+

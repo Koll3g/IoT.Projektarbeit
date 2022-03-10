@@ -26,8 +26,10 @@ using namespace ZbW::CommSubsystem;
 static bool QwiicPeripheralsInit();
 static void InitState2Text(bool state);
 static void CommunicationTask();
+static void ButtonTask();
 static void QwiicWatchDog();
 static void MeasureSoilMoistureTask();
+static void ShowMoistureOnLeds();
 
 static WiFiManager  upstream;
 static MqttClient   mqtt(upstream);
@@ -127,6 +129,7 @@ static void InitState2Text(bool state) {
 
 void loop() {
   CommunicationTask();
+  ButtonTask();
   MeasureSoilMoistureTask();
   QwiicWatchDog();
   delay(20);
@@ -154,6 +157,9 @@ static void MeasureSoilMoistureTask(){
     Serial.print(reportingString.c_str());
     Serial.print(" with value: ");
     Serial.println(soilMoistureStr.c_str());
+
+    //show percentage on leds
+    ShowMoistureOnLeds();
   }
 }
 
@@ -177,4 +183,31 @@ static void QwiicWatchDog() {
       break;
     }
   }
+}
+
+static void ButtonTask() {
+  if (_buttonState != _button->isPressed()) {
+    _buttonState = !_buttonState;
+    //Calibrate system by setting limit in dry condition
+    Serial.println("Pressed button to calibrate 0% moisture");
+    _soilSens->setUpperAdcLimit(_soilSens->getAdcValue());
+  }
+}
+
+static void ShowMoistureOnLeds(){
+
+  //as led array has 10 leds, calculate percentage based on base 10
+  uint8_t ledCount = _soilSens->getPercentageValue() / 10;
+
+  //turn all leds off
+  _leds->LEDOff();
+
+  //turn leds on accordingly
+  for(int i=1; i<ledCount+1; i++){
+    _leds->setLEDColor(i, 0,0,255);
+  }
+
+  Serial.print("Turned ");
+  Serial.print(ledCount);
+  Serial.println(" LEDs on to represent moisture");
 }
