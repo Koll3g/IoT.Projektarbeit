@@ -19,7 +19,7 @@
 
 #include "LedUtils.h"
 
-#include "ValveFsm.h"
+#include "WindowFsm.h"
 
 #include "main.h"
 
@@ -27,14 +27,14 @@
 using namespace ZbW;
 using namespace ZbW::CommSubsystem;
 
-static MQTT_MESSAGE_HANDLER_DECLARE(OnValveTopicReceived);
+static MQTT_MESSAGE_HANDLER_DECLARE(OnWindowTopicReceived);
 
 static bool QwiicPeripheralsInit();
 static void InitState2Text(bool state);
 static void CommunicationTask();
 static void QwiicWatchDog();
 static void LogMessage(const char *topic, const void *data, size_t len);
-static bool SoilMoistureFromString(const char *message, uint* moisture);
+static bool TemperatureFromString(const char *message, int* temperature);
 
 static WiFiManager  upstream;
 static MqttClient   mqtt(upstream);
@@ -45,14 +45,15 @@ static StopWatch    _timeout(1000);
 static StopWatch    _i2ctimeout(200);
 static bool         _buttonState = false;
 
-static String name = "Water Valve Node";
+static String name = "Window Actor Node";
 
 //MQTT Settings
-static String topic = "Irrigation"; //Topic the node is listening to
+static String topic = "Temperature"; //Topic the node is listening to
 static int id = 0; //specific id for this node (topic inside topic defined above)
-static String subscriptionStringTarget = topic + "/" + id + "/Target";
-static String subscriptionStringActual = topic + "/" + id + "/Actual";
-static String reportingString = topic + "/" + id + "/Valve";
+static String subscriptionStringTarget = topic + "/" + id + "/Inside/Target";
+static String subscriptionStringActualInterior = topic + "/" + id + "Interior/Actual";
+static String subscriptionStringActualExterior = topic + "/" + id + "Exterior/Actual";
+static String reportingString = topic + "/" + id + "/Window";
 
 void setup() {
   Serial.begin(115200);
@@ -67,7 +68,7 @@ void setup() {
     Serial.println("Peripherals initialized, continuing startup.");
   }
 
-  ValveChangerInit(_leds, _button);
+  WindowChangerInit(_leds, _button);
 
   Serial.print("Resetting WiFi...");
   upstream.reset();
@@ -87,8 +88,9 @@ void setup() {
   /* Register topic handlers. As The simplified MQTT client does not support 
      wild cards, we have to subscribe for every single LED explicitly. */
   {
-    mqtt.subscribe(subscriptionStringTarget.c_str(),   MQTT_MESSAGE_HANDLER_NAME(OnValveTopicReceived), 0);
-    mqtt.subscribe(subscriptionStringActual.c_str(),   MQTT_MESSAGE_HANDLER_NAME(OnValveTopicReceived), 0);
+    mqtt.subscribe(subscriptionStringTarget.c_str(),   MQTT_MESSAGE_HANDLER_NAME(OnWindowTopicReceived), 0);
+    mqtt.subscribe(subscriptionStringActualInterior.c_str(),   MQTT_MESSAGE_HANDLER_NAME(OnWindowTopicReceived), 0);
+    mqtt.subscribe(subscriptionStringActualExterior.c_str(),   MQTT_MESSAGE_HANDLER_NAME(OnWindowTopicReceived), 0);
   }
 
   _timeout.start(1000);
@@ -134,7 +136,7 @@ static void InitState2Text(bool state) {
 
 void loop() {
   
-  ValveChangerRun();
+  WindowChangerRun();
   CommunicationTask();
 
   QwiicWatchDog();
@@ -148,7 +150,7 @@ static void CommunicationTask() {
   }
 }
 
-static MQTT_MESSAGE_HANDLER_DECLARE(OnValveTopicReceived) {
+static MQTT_MESSAGE_HANDLER_DECLARE(OnWindowTopicReceived) {
  
  const char *instance = BasenameGet(topic);
 
@@ -164,21 +166,27 @@ static MQTT_MESSAGE_HANDLER_DECLARE(OnValveTopicReceived) {
     Serial.println("received updated target value");
 
     //Convert string to int & check if value makes sense
-    
-    uint targetMoisture;
-
-
-    if(SoilMoistureFromString(message, &targetMoisture)){
-      SetTargetMoistureValue(targetMoisture); //Set "real" TargetMoistureValue
+    int targetTemperature;
+    if(TemperatureFromString(message, &targetTemperature)){
+      SetTargetTempWindow(targetTemperature); 
     }
   }
-  else if (strcmp(subscriptionStringActual.c_str(), topic) == 0) {
-    Serial.println("received updated actual value");
+  else if (strcmp(subscriptionStringActualInterior.c_str(), topic) == 0) {
+    Serial.println("received updated actual interior value");
 
     //Convert string to int & check if value makes sense
-    uint actualMoisture;
-    if(SoilMoistureFromString(message, &actualMoisture)){
-      SetActualMoistureValue(actualMoisture); //Set "real" ActualtMoistureValue
+    int actualTemperature;
+    if(TemperatureFromString(message, &actualTemperature)){
+      SetActualInteriorTempWindow(actualTemperature); 
+    }
+  }
+  else if (strcmp(subscriptionStringActualExterior.c_str(), topic) == 0) {
+    Serial.println("received updated actual exterior value");
+
+    //Convert string to int & check if value makes sense
+    int actualTemperature;
+    if(TemperatureFromString(message, &actualTemperature)){
+      SetActualExteriorTempWindow(actualTemperature); 
     }
   }
   else {
@@ -219,29 +227,29 @@ static void QwiicWatchDog() {
   }
 }
 
-static bool SoilMoistureFromString(const char *message, uint* moisture){
+static bool TemperatureFromString(const char *message, int* temperature){
   
   //if message was once i.e. 4 digits long, it will always add 0 in the back, even if the next value is only 2 digits long!
   std::stringstream ss(message);
-  uint moistureCast;
+  int tempCast;
 
-  if(ss >> moistureCast && moistureCast >= 0 && moistureCast <= 100){
-    *moisture = moistureCast;
-    Serial.print("moisture value is valid - Value: ");
-    Serial.println(moistureCast);
+  if(ss >> tempCast && tempCast >= -20 && tempCast <= 50){
+    *temperature = tempCast;
+    Serial.print("temperature value is valid - Value: ");
+    Serial.println(tempCast);
     return true;
   }
   else{
     Serial.print("moisture value invalid! - Value: ");
-    Serial.println(moistureCast);
+    Serial.println(tempCast);
     return false;
   }
 
 }
 
-void MqttUpdateValveState(String state){
+void MqttUpdateWindowState(String state){
   mqtt.publish(reportingString.c_str(), state);
-  Serial.print("published new valve state to: ");
+  Serial.print("published new Window state to: ");
   Serial.print(reportingString.c_str());
   Serial.print(" with value: ");
   Serial.println(state.c_str());
