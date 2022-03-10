@@ -11,9 +11,9 @@ typedef struct sWindowContext {
     bool buttonOn;
     bool WindowOpen; //Assume Window would move according to this bool -> true = open
     bool WindowInitialized; 
-    uint TargetTempValue = 25; //default value if cloud is not available
-    uint ActualInteriorTempValue = 25; //default value
-    uint ActualExteriorTempValue = 25; //default value
+    uint TargetTempValue = 20; //default value if cloud is not available
+    uint ActualInteriorTempValue = 20; //default value
+    uint ActualExteriorTempValue = 20; //default value
     QwiicButton *button;
 }tWindowContext;
 
