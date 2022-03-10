@@ -50,9 +50,9 @@ static String name = "Window Actor Node";
 //MQTT Settings
 static String topic = "Temperature"; //Topic the node is listening to
 static int id = 0; //specific id for this node (topic inside topic defined above)
-static String subscriptionStringTarget = topic + "/" + id + "/Inside/Target";
-static String subscriptionStringActualInterior = topic + "/" + id + "Interior/Actual";
-static String subscriptionStringActualExterior = topic + "/" + id + "Exterior/Actual";
+static String subscriptionStringTarget = topic + "/" + id + "/Interior/Target";
+static String subscriptionStringActualInterior = topic + "/" + id + "/Interior/Actual";
+static String subscriptionStringActualExterior = topic + "/" + id + "/Exterior/Actual";
 static String reportingString = topic + "/" + id + "/Window";
 
 void setup() {

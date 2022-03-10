@@ -25,7 +25,7 @@ typedef enum eWindowState {
     WINDOW_ST_COUNT
 }tWindowState;
 
-static void ButtoWindowToggle(tWindowContext *me);
+static void ButtonWindowToggle(tWindowContext *me);
 
 static FSM_STATE_HANDLER(Undef);
 static FSM_STATE_HANDLER(Closed);
@@ -138,11 +138,11 @@ static FSM_STATE_HANDLER(Open) {
         //Check inside temp vs. outside temp
         if(me->TargetTempValue > me->ActualInteriorTempValue){
             Serial.println("Inside temperature below target temperature - close windows");
-            fsm->NextStateSet(WINDOW_ST_OPEN);
+            fsm->NextStateSet(WINDOW_ST_CLOSED);
         }
         //wait for button to be pressed to manually open the Window
         else if (me->button->isPressed()) {
-            fsm->NextStateSet(WINDOW_ST_OPEN);
+            fsm->NextStateSet(WINDOW_ST_CLOSED);
             ButtonWindowToggle(me);
         }
     }
