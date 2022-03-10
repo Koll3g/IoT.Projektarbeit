@@ -1,3 +1,3 @@
 #include <Arduino.h>
 
-void MqttUpdateWindowState(String state);
+void MqttUpdateTempSimState(String state);
