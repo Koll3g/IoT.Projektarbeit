@@ -1,0 +1,14 @@
+{
+	"folders": [
+		{
+			"name": "TemperatureSensorNode",
+			"path": "."
+		}
+	],
+	"settings": {
+		"files.associations": {
+			"*.h": "cpp",
+			"*.cpp": "cpp"
+		}
+	}
+}

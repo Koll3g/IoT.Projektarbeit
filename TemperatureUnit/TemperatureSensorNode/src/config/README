@@ -1,0 +1,25 @@
+# Application specific configuration
+
+- [Application specific configuration](#application-specific-configuration)
+  - [Brief overview](#brief-overview)
+  - [Create application specific configurations](#create-application-specific-configurations)
+
+## Brief overview
+
+This folder allows application and location specific configuration. There is a template-
+configuration available in the `.\default` folder, giving you templates for the various
+files. Your local configuration resides in the `.\local` folder.
+
+As your local configuration may contain secrets (e.g. your WiFi password or your
+credentials), the `.\local` folder is excluded from version control by a
+corresponding `.gitignore`-clause.
+
+## Create application specific configurations
+
+Whenever you want to adopt to your specific environment (e.g. in order to access
+your local WiFi Network), simply execute the following steps:
+
+1. Copy the specific file from the `.\default` folder into your `.\local` folder.
+2. Adjust the copyright notice and the author
+3. Remove the "do not edit" warning
+4. Adjust the settings according to your needs
